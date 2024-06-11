@@ -5,6 +5,7 @@ import cors from 'cors';
 import { routerUsers } from './routes/userRoutes';
 import dotenv from 'dotenv';
 import { validateToken } from './shared/token/validateToken';
+import { getConnection } from './database/database';
 dotenv.config();
 const app = express();
 const server = createServer(app);
@@ -25,11 +26,23 @@ app.use((req:any, res:any,next) => {
     res.header("Access-Control-Allow-Origin","*")
     res.header("Access-Control-Allow-Methods","*")
     res.header("Access-Control-Allow-Headers","Content-Type, Authorization")
-})
-io.on('connection', (socket: Socket) => {
-  socket.on("chat",(message)=>{
-    console.log(message)
-    io.emit('chat', message);
+});
+
+io.on('connection', async  (socket:any) => {
+  const connection = await getConnection();
+  const chatId = socket.handshake.query.idChat;
+  const [messages] = await connection.query('SELECT * FROM comentarios WHERE id_chat = ? ORDER BY fecha_creacion ASC', [chatId]);
+  socket.emit('previous messages', messages);
+  socket.on("chat",async (message:any)=>{
+    try{
+       const [rows]:any=await connection.query("INSERT INTO comentarios(mensaje,id_usuario,id_chat)VALUES (?, ?,?)",[message.mensaje,message.id_user,chatId]);
+       const [rowsSelect]:any = await connection.query("SELECT * from comentarios WHERE id=?",rows.insertId)
+       console.log(rowsSelect);
+       io.emit('chat', rowsSelect[0]);
+    }catch(err){
+      console.log(err);
+    }
+    
   })
 });
 
