@@ -15,7 +15,7 @@ export const register= async (req:any,res:any)=>{
         }
         const postUsuarios = await connection.query("INSERT INTO usuarios(nombre_usuario,correo,contraseña) VALUES (?,?,?)",[data.nombreUsuario,data.correo,data.contraseña])
         const response = correctResponse(messagesUsers.INSERTED_USER,postUsuarios)
-        res.json(response)
+        res.json(correctResponse("Registro hecho con exito",response))
     }catch(err){
         console.log(err);
         res.json(error(errorMessage.ERROR))
@@ -31,11 +31,8 @@ export const login= async (req:any, res:any) => {
             res.json(error(errorMessage.NOT_FOUND));
             return;
           }
-        const token = accessToken(rows.id)
-        res.header("authorization",token).json({
-            message:"Usuario autenticado",
-            token:token
-        })
+        const token = accessToken(rows[0].id)
+        res.header("authorization",token).json(correctResponse("Usuario autenticado",{id:rows[0].id,token:token}))
     }catch(e){
         console.log(e)
         res.json(error(errorMessage.ERROR))
@@ -54,5 +51,19 @@ export const addFriend = async (req:any, res:any)=>{
     }catch(e){
         console.log(e)
         res.json(error(errorMessage.ERROR))
+    }
+}
+export const getUser = async (req:any, res:any) => {
+    console.log("hola")
+    const id = req.params.id;
+    try{
+        const connection = await getConnection();
+        const [rows2]:any = await connection.query("Select * from usuarios where id =?",[id]);
+        if(rows2.length <1){
+            res.json(error(messagesUsers.USERS_NOT_FOUND))
+        }
+        res.json(correctResponse(messagesUsers.USER_FOUND,rows2[0]))
+    }catch(e){
+        res.json(error(errorMessage.ERROR));
     }
 }

@@ -6,10 +6,10 @@ import { errorMessage } from "../../constants/errorMessages";
 config();
 export function validateToken(req: any, res: any,next:any){
     const accessToken = req.headers['authorization'];
+    console.log(req.path);
     if (req.path === '/user/login') {
         return next();
     }
-    console.log("Variale",process.env.SECRET_KEY)
     if (!process.env.SECRET_KEY) {
         throw new Error('Secret key is not defined in environment variables');
     }

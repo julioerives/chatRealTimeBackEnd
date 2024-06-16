@@ -1,0 +1,44 @@
+create database chatRealTime;
+use chatRealTime;
+
+drop database  chatRealTime;
+create table usuarios(
+id int primary key auto_increment,
+nombre_usuario varchar(100) not null,
+correo varchar(100) not null,
+contraseña varchar(100) not null
+);
+CREATE TABLE comentarios (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  mensaje VARCHAR(100) NOT NULL,
+  fecha_creacion DATETIME DEFAULT CURRENT_TIMESTAMP,
+  id_usuario INT NOT NULL,
+  id_chat INT NOT NULL,
+  FOREIGN KEY (id_usuario) REFERENCES usuarios(id),
+  FOREIGN KEY (id_chat) REFERENCES chats(id)
+);
+CREATE TABLE chats(
+id int primary key auto_increment,
+nombre varchar(100) NOT NULL,
+fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP 
+);
+CREATE TABLE friends (
+id int primary key auto_increment,
+id_usuario1 int not null,
+id_usuario2 int NOT NULL,
+FOREIGN KEY (id_usuario1) REFERENCES usuarios(id),
+FOREIGN KEY (id_usuario2) REFERENCES usuarios(id)
+);
+create table chatUsers(
+id int primary key auto_increment,
+id_chat int NOT NULL,
+id_user int NOT NULL,
+FOREIGN KEY (id_chat) REFERENCES chats(id),
+FOREIGN KEY (id_user) REFERENCES usuarios(id)
+)
+select * from usuarios;
+insert into chats(nombre) values('Chat 1');
+insert into chatUsers(id_chat,id_user) values (1,1);
+select * from chatUsers;
+select * from comentarios;
+insert into usuarios(nombre_usuario,correo,contraseña) values ("Julio_Erives","julio1@gmail.com","123456");
