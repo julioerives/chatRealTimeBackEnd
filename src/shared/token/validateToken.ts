@@ -3,11 +3,13 @@ import { error } from "../../response/error";
 import { config } from "dotenv";
 import jwt from 'jsonwebtoken';
 import { errorMessage } from "../../constants/errorMessages";
+import { routesNoProtected } from "../../constants/routesNoProtected";
+
 config();
 export function validateToken(req: any, res: any,next:any){
     const accessToken = req.headers['authorization'];
     console.log(req.path);
-    if (req.path === '/user/login') {
+    if (routesNoProtected.includes(req.path)) {
         return next();
     }
     if (!process.env.SECRET_KEY) {

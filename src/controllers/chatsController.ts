@@ -15,6 +15,7 @@ export const getChats = async  (req:any, res:any)=>{
         console.log("🚀 ~ getChats ~ rows:", rows)
         if(rows.length <1){
             res.json(error(errorMessage.NOT_FOUND))
+            return;
         }
         res.json(correctResponse(chatsMessages.chats_found,rows))
     }catch(e){

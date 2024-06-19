@@ -24,6 +24,9 @@ app.use(validateToken)
 app.use(express.json());
 app.use("/user",routerUsers);
 app.use("/chats",routerChats)
+app.get("/",(req, res) => {
+  res.send("hol")
+})
 app.use((req:any, res:any) => {
     res.header("Access-Control-Allow-Origin","*")
     res.header("Access-Control-Allow-Methods","*")

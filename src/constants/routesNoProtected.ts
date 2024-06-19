@@ -1,0 +1,1 @@
+export const routesNoProtected=['/user/login','/user/register']
