@@ -5,7 +5,6 @@ import { correctResponse } from "../response/correct";
 import { messagesUsers } from "../constants/messagesUsers";
 import { chatsMessages } from "../constants/chatsMessages";
 export const getChats = async  (req:any, res:any)=>{
-    console.log("Chats")
     const id = req.params.id;
     // const id = 1;
     try{
@@ -23,4 +22,23 @@ export const getChats = async  (req:any, res:any)=>{
         console.log(e)
     }
 
+}
+export const insertChats = async (req:any, res:any) => {
+    const data =req.body;
+    console.log(data);
+    try{
+        const connection = await getConnection();
+        const [rowsChat]: any = await connection.query("INSERT INTO chats(nombre) VALUES(?)", [data.nombre]);
+        const insertValues = data.friends.map((userId: any) => [rowsChat.insertId, userId.id_usuario1 != data.id ? userId.id_usuario1 : userId.id_usuario2]);
+        insertValues.push([rowsChat.insertId,data.id])
+        const placeholders = insertValues.map(() => '(?, ?)').join(',');
+        const flatValues = insertValues.reduce((acc:any, val:any) => acc.concat(val), []);
+        
+        const insertQuery = await connection.query(`INSERT INTO chatUsers (id_chat, id_user) VALUES ${placeholders}`, flatValues);
+        
+        res.json(correctResponse(chatsMessages.CHAT_INSERTED, insertQuery));
+    }catch(e){
+        console.log(e)
+        res.json(error(errorMessage.ERROR))
+    }
 }
