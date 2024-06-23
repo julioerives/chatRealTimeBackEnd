@@ -25,11 +25,11 @@ export const getChats = async  (req:any, res:any)=>{
 }
 export const insertChats = async (req:any, res:any) => {
     const data =req.body;
-    console.log(data);
+    console.log(data)
     try{
         const connection = await getConnection();
-        const [rowsChat]: any = await connection.query("INSERT INTO chats(nombre) VALUES(?)", [data.nombre]);
-        const insertValues = data.friends.map((userId: any) => [rowsChat.insertId, userId.id_usuario1 != data.id ? userId.id_usuario1 : userId.id_usuario2]);
+        const [rowsChat]: any = await connection.query("INSERT INTO chats(nombre,descripcion) VALUES(?,?    )", [data.nombre,data.descripcion]);
+        const insertValues = data.friends.map((userId: any) => [rowsChat.insertId, userId.id]);
         insertValues.push([rowsChat.insertId,data.id])
         const placeholders = insertValues.map(() => '(?, ?)').join(',');
         const flatValues = insertValues.reduce((acc:any, val:any) => acc.concat(val), []);

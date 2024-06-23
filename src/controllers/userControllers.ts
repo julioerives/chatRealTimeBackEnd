@@ -46,7 +46,7 @@ export const register = async (req: any, res: any) => {
 };
 export const login = async (req: any, res: any) => {
   const data = req.body;
-  console.log(data.contraseña);
+  console.log(data);
   try {
     console.log("Hola");
     const connection = await getConnection();
@@ -54,6 +54,7 @@ export const login = async (req: any, res: any) => {
       "SELECT * FROM usuarios WHERE  correo = ? AND contraseña =?",
       [data.correo, data.contraseña]
     );
+    console.log(rows.length)
     if (rows.length < 1) {
       res.json(error(errorMessage.NOT_FOUND));
       return;
@@ -71,18 +72,20 @@ export const login = async (req: any, res: any) => {
 };
 export const addFriend = async (req: any, res: any) => {
   const data = req.body;
+  console.log(data);
   try {
     const connection = await getConnection();
     const [rows2]: any = await connection.query(
       "SELECT * FROM usuarios where id =? OR id=?",
-      [data.idUser1, data.idUser2]
+      [data.idSeguidor, data.idSeguido]
     );
+    console.log(rows2);
     if (rows2.length < 2) {
       res.json(error(messagesUsers.USERS_NOT_FOUND));
     }
     const [rows]: any = await connection.query(
-      "INSERT INTO friends(id_usuario1,id_usuario2) VALUES (?, ?)",
-      [data.idUser1, data.idUser2]
+      "INSERT INTO seguidores(id_seguidor,id_seguido) VALUES (?, ?)",
+      [data.idSeguidor, data.idSeguido]
     );
     res.json(correctResponse(messagesUsers.ADDED_FRIEND, rows));
   } catch (e) {
@@ -92,7 +95,6 @@ export const addFriend = async (req: any, res: any) => {
 };
 export const getUser = async (req: any, res: any) => {
   const id = req.params.id;
-  console.log(id);
   try {
     const connection = await getConnection();
     const [rows2]: any = await connection.query(
@@ -111,42 +113,55 @@ export const getUser = async (req: any, res: any) => {
 export const getAllUsers = async (req: any, res: any) => {
   const { id, page } = req.query;
   const limitUsers = page * 10;
-  console.log(id);
   try {
     const connection = await getConnection();
+      
+    const consulta = `
+    (
+  SELECT u1.nombre_usuario, u1.correo, u1.id
+  FROM usuarios u1
+  LEFT JOIN seguidores s1 ON u1.id = s1.id_seguido AND s1.id_seguidor = ?
+  WHERE s1.id_seguido IS NULL AND u1.id != ?
+)
+UNION
+(
+  SELECT u2.nombre_usuario, u2.correo, u2.id
+  FROM usuarios u2
+  JOIN seguidores s2 ON u2.id = s2.id_seguidor
+  LEFT JOIN seguidores s3 ON u2.id = s3.id_seguido AND s3.id_seguidor = ?
+  WHERE s2.id_seguido = ? AND s3.id_seguidor IS NULL AND u2.id != ?
+)
+ORDER BY RAND()
+LIMIT ?;
+    `;
     const [rows]: any = await connection.query(
-      "SELECT * FROM usuarios WHERE id != ? AND id NOT IN (SELECT id_usuario2 FROM friends WHERE id_usuario1 = ?) AND id NOT IN (SELECT id_usuario1 FROM friends WHERE id_usuario2 = ?) ORDER BY RAND() LIMIT ?",
-      [id, id, id, limitUsers]
+      consulta,
+      [id,id,id,id,id, limitUsers]
     );
-    console.log(rows);
+    console.log("Rowsss",rows);
     if (rows.length < 1) {
       res.json(error(messagesUsers.USERS_NOT_FOUND));
       return;
     }
     res.json(correctResponse(messagesUsers.USER_FOUND, rows));
   } catch (e) {
+    console.log(e)
     res.json(error(errorMessage.ERROR));
   }
 };
 export const getFriends = async (req: any, res: any) => {
   const { id } = req.query;
-  console.log("🚀 ~ getFriends ~ id:", id)
   try {
     const connection = await getConnection();
-    const consulta = `SELECT 
-    f.*, 
-    u.correo AS correo,
-    u.nombre_usuario AS nombre_usuario
-    FROM 
-    friends f 
-INNER JOIN 
-    usuarios u 
-ON 
-    ((u.id = f.id_usuario1 OR u.id = f.id_usuario2 ) AND u.id != ?) 
-WHERE 
-    f.id_usuario1 = ? OR f.id_usuario2 = ?;
-`;
-    const [rows]: any = await connection.query(consulta, [id, id, id]);
+    const consulta = `
+    SELECT u1.nombre_usuario,u1.correo,u1.id
+FROM usuarios u1
+JOIN seguidores s1 ON u1.id = s1.id_seguido
+JOIN seguidores s2 ON s1.id_seguidor = s2.id_seguido
+WHERE s1.id_seguidor = ? AND s2.id_seguido = ? AND s2.id_seguidor = u1.id;
+    `;
+    const [rows]: any = await connection.query(consulta, [id, id]);
+
     if (rows.length < 1) {
       res.json(error(messagesUsers.FRIENDS_NOT_FOUND));
       return;
@@ -157,3 +172,48 @@ WHERE
     res.json(error(errorMessage.ERROR));
   }
 };
+export const getFollowing= async (req:any, res:any)=>{
+  const { id } = req.query;
+  console.log("🚀 ~ getFollowing ~ id :", id )
+  try {
+    const connection = await getConnection();
+    const consulta = `
+    SELECT u1.nombre_usuario,u1.correo,u1.id
+FROM usuarios u1
+JOIN seguidores s1 ON u1.id = s1.id_seguido
+WHERE s1.id_seguidor = ?;
+    `;
+    const [rows]: any = await connection.query(consulta, [id, id]);
+    console.log(rows);
+    if (rows.length < 1) {
+      res.json(error(messagesUsers.FOLLOWING_NOT_FOUND));
+      return;
+    }
+    res.json(correctResponse(messagesUsers.FOLLOWING_FOUND, rows));
+  } catch (err) {
+    console.log(err);
+    res.json(error(errorMessage.ERROR));
+  }
+}
+export const getFollowers = async (req:any,res:any) => {
+  const { id } = req.query;
+  try {
+    const connection = await getConnection();
+    const consulta = `
+    SELECT u1.nombre_usuario,u1.correo,u1.id
+FROM usuarios u1
+JOIN seguidores s1 ON u1.id = s1.id_seguidor
+WHERE s1.id_seguido = ?;
+    `;
+    const [rows]: any = await connection.query(consulta, [id]);
+    console.log(rows);
+    if (rows.length < 1) {
+      res.json(error(messagesUsers.FOLLOWERS_NOT_FOUND));
+      return;
+    }
+    res.json(correctResponse(messagesUsers.FOLLOWERS_FOUND, rows));
+  } catch (err) {
+    console.log(err);
+    res.json(error(errorMessage.ERROR));
+  }
+}
