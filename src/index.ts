@@ -4,6 +4,7 @@ import { Server, Socket } from 'socket.io';
 import cors from 'cors';
 import { routerUsers } from './routes/userRoutes';
 import { routerChats } from './routes/chatsRoutes';
+import { routerGruposPublicos } from './routes/gruposPublicosRoutes';
 import dotenv from 'dotenv';
 import { validateToken } from './shared/token/validateToken';
 import { getConnection } from './database/database';
@@ -23,7 +24,8 @@ app.use(cors());
 app.use(validateToken)
 app.use(express.json());
 app.use("/user",routerUsers);
-app.use("/chats",routerChats)
+app.use("/chats",routerChats);
+app.use("/groups",routerGruposPublicos);
 app.get("/",(req, res) => {
   res.send("hol")
 })
