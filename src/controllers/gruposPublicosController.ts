@@ -62,3 +62,19 @@ export const getDataGroups = async (req:any, res:any) => {
         res.json(error(errorMessage.ERROR))
     }
 }
+export const createGroup  = async(req:any, res:any)=>{
+    const {nombre,descripcion,id_propietario,id_tipoGrupo} = req.body;
+    try{
+        const connection = await getConnection();
+        const [rows]:any = await connection.query("INSERT INTO grupos(nombre,descripcion,id_propietario,id_tipoGrupo) VALUES (?,?,?,?)",[nombre,descripcion,id_propietario,id_tipoGrupo]);
+        if(rows.affectedRows <1){
+            res.status(401).json(error(errorMessage.ERROR));
+            return;
+        }
+        res.status(201).json(correctResponse(gruposPublicosMensajes.INSERTED_GROUPS,[]));
+        return;
+    }catch(err) {
+        res.status(500).json(error(errorMessage.ERROR));
+        console.log(err);
+    }
+}
