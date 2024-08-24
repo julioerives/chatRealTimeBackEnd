@@ -95,8 +95,9 @@ export const addFriend = async (req: any, res: any) => {
 };
 export const getUser = async (req: any, res: any) => {
   const id = req.params.id;
+  let connection;
   try {
-    const connection = await getConnection();
+    connection = await getConnection();
     const [rows2]: any = await connection.query(
       "Select * from usuarios where id =?",
       [id]
@@ -108,13 +109,16 @@ export const getUser = async (req: any, res: any) => {
     res.json(correctResponse(messagesUsers.USER_FOUND, rows2[0]));
   } catch (e) {
     res.json(error(errorMessage.ERROR));
+  }finally{
+    connection?.release();
   }
 };
 export const getAllUsers = async (req: any, res: any) => {
   const { id, page } = req.query;
   const limitUsers = page * 10;
+  let connection;
   try {
-    const connection = await getConnection();
+    connection = await getConnection();
       
     const consulta = `
     (
@@ -147,6 +151,8 @@ LIMIT ?;
   } catch (e) {
     console.log(e)
     res.json(error(errorMessage.ERROR));
+  }finally{
+    connection?.release();
   }
 };
 export const getFriends = async (req: any, res: any) => {
@@ -174,9 +180,9 @@ WHERE s1.id_seguidor = ? AND s2.id_seguido = ? AND s2.id_seguidor = u1.id;
 };
 export const getFollowing= async (req:any, res:any)=>{
   const { id } = req.query;
-  console.log("🚀 ~ getFollowing ~ id :", id )
+  let connection;
   try {
-    const connection = await getConnection();
+    connection = await getConnection();
     const consulta = `
     SELECT u1.nombre_usuario,u1.correo,u1.id
 FROM usuarios u1
@@ -193,17 +199,20 @@ WHERE s1.id_seguidor = ?;
   } catch (err) {
     console.log(err);
     res.json(error(errorMessage.ERROR));
+  }finally{
+    connection?.release();
   }
 }
 export const getFollowers = async (req:any,res:any) => {
   const { id } = req.query;
+  let connection;
   try {
-    const connection = await getConnection();
+    connection = await getConnection();
     const consulta = `
     SELECT u1.nombre_usuario,u1.correo,u1.id
-FROM usuarios u1
-JOIN seguidores s1 ON u1.id = s1.id_seguidor
-WHERE s1.id_seguido = ?;
+    FROM usuarios u1
+    JOIN seguidores s1 ON u1.id = s1.id_seguidor
+    WHERE s1.id_seguido = ?;
     `;
     const [rows]: any = await connection.query(consulta, [id]);
     console.log(rows);
@@ -215,5 +224,7 @@ WHERE s1.id_seguido = ?;
   } catch (err) {
     console.log(err);
     res.json(error(errorMessage.ERROR));
+  }finally{
+    connection?.release();
   }
 }

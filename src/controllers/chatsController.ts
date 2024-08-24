@@ -6,8 +6,10 @@ import { messagesUsers } from "../constants/messagesUsers";
 import { chatsMessages } from "../constants/chatsMessages";
 export const getChats = async  (req:any, res:any)=>{
     const id = req.params.id;
+    let connection;
     try{
-        const connection = await getConnection();
+        connection = await getConnection();
+
         // const [rows]:any = await connection.query("SELECT chatUsers.*, comentarios.* FROM chatUsers INNER JOIN comentarios ON comentarios.id_usuario = chatUsers.id_user AND comentarios.id_chat = chatUsers.id_chat WHERE chatUsers.id_user =?", [id]);
         const [rows]:any = await connection.query("SELECT chatUsers.*, chats.id, chats.nombre,DATE_FORMAT(fecha_creacion, '%d-%m-%Y') AS fecha_creacion FROM chatUsers INNER JOIN chats ON chatUsers.id_chat = chats.id WHERE chatUsers.id_user =?",[id])
         if(rows.length <1){
@@ -18,14 +20,17 @@ export const getChats = async  (req:any, res:any)=>{
     }catch(e){
         res.json(error(errorMessage.ERROR));
         console.log(e)
+    }finally{
+        if(connection) connection.release()
     }
 
 }
 export const insertChats = async (req:any, res:any) => {
     const data =req.body;
     console.log(data)
+    let connection;
     try{
-        const connection = await getConnection();
+        connection = await getConnection();
         const [rowsChat]: any = await connection.query("INSERT INTO chats(nombre,descripcion) VALUES(?,?    )", [data.nombre,data.descripcion]);
         const insertValues = data.friends.map((userId: any) => [rowsChat.insertId, userId.id]);
         insertValues.push([rowsChat.insertId,data.id])
@@ -38,5 +43,7 @@ export const insertChats = async (req:any, res:any) => {
     }catch(e){
         console.log(e)
         res.json(error(errorMessage.ERROR))
+    }finally{
+        connection?.release();
     }
 }
