@@ -51,11 +51,10 @@ io.on('connection', async  (socket:any) => {
        io.emit('chat', rowsSelect[0]);
     }catch(err){
       console.log(err);
-    }finally{
-      connection.release();
     }
     
   })
+  connection.release();
 });
 
 server.listen(PORT, () => {

@@ -22,7 +22,7 @@ export function validateToken(req: any, res: any,next:any){
     const token = accessToken.split(' ')[1];
     jwt.verify(token,process.env.SECRET_KEY,(err:any,user:any)=>{        
         if(err){
-            res.json(error(errorMessage.INVALID_TOKEN))
+            res.status(401).json(error(errorMessage.INVALID_TOKEN))
             return
         }
         next();

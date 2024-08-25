@@ -9,9 +9,29 @@ export const getChats = async  (req:any, res:any)=>{
     let connection;
     try{
         connection = await getConnection();
-
+        const consulta = `
+        SELECT 
+        chatUsers.*, 
+        CH.id, 
+        CH.nombre,
+        (
+        SELECT 
+        JSON_OBJECT(
+        'message', C.mensaje,
+        'id_usuario', C.id_usuario
+        )
+        FROM comentarios C 
+        WHERE C.id_usuario = ? AND C.id_usuario = CH.id 
+        ORDER BY C.fecha_creacion DESC 
+        LIMIT 1
+        ) AS last_message,
+        DATE_FORMAT(CH.fecha_creacion, '%d-%m-%Y') AS fecha_creacion 
+        FROM chatUsers
+        INNER JOIN chats CH ON chatUsers.id_chat = CH.id 
+        WHERE chatUsers.id_user =?
+        `
         // const [rows]:any = await connection.query("SELECT chatUsers.*, comentarios.* FROM chatUsers INNER JOIN comentarios ON comentarios.id_usuario = chatUsers.id_user AND comentarios.id_chat = chatUsers.id_chat WHERE chatUsers.id_user =?", [id]);
-        const [rows]:any = await connection.query("SELECT chatUsers.*, chats.id, chats.nombre,DATE_FORMAT(fecha_creacion, '%d-%m-%Y') AS fecha_creacion FROM chatUsers INNER JOIN chats ON chatUsers.id_chat = chats.id WHERE chatUsers.id_user =?",[id])
+        const [rows]:any = await connection.query(consulta,[id,id])
         if(rows.length <1){
             res.json(error(errorMessage.NOT_FOUND))
             return;
